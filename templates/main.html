@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+<title>QUANT-NET</title>
+{% endblock %}
+
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Two Panels in the Middle -->
+    <div class="row g-4 mt-3">
+        <div class="col-md-8">
+            <div class="card shadow-sm d-flex flex-column" id="exp-card" style="height: 350px;">
+                <div class="card-header text-start">Experiments</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="height: 300px; overflow-y: auto;">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th id="exp-time-header" style="cursor:pointer;">Created Time ▼</th>
+                                    <th>Resources</th>
+                                    <th>State</th>
+                                    <th class="text-center">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exp-table-body">
+                                <!-- Data will be inserted here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm d-flex flex-column" style="height: 350px;">
+                <div class="card-header text-start">Agent Status</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="height: 300px; overflow-y: auto;">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>System ID</th>
+                                    <th>Last Seen</th>
+                                    <th>State</th>
+                                    <th class="text-center">Info</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agent-table-body">
+                                <!-- Data will be inserted here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calibrations Panel -->
+    <div class="row g-4 mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm" id="cal-card" style="height: 300px;">
+                <div class="card-header text-start">Link Calibrations</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="height: 250px; overflow-y: auto;">
+                        <table class="table table-striped table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th id="cal-time-header" style="cursor:pointer;">Created Time ▼</th>
+                                    <th>Source</th>
+                                    <th>Destination</th>
+                                    <th>Parameters</th>
+                                    <th>Status</th>
+                                    <th>Chart</th>
+                                    <th class="text-center">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="calibration-table-body">
+                                <!-- Dynamic Table Rows Will Be Populated Here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header text-start">Topology</div>
+                <div class="card-body p-0">
+                    <div id="topology-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-3">
+        <div class="col-12">
+            <!-- Bootstrap Accordion (Ribbon Panel) -->
+            <div class="accordion" id="panelAccordion">
+                <div class="accordion-item">
+                    <!-- Accordion Header (Clickable Ribbon) -->
+                    <h2 class="accordion-header" id="panel1Heading">
+                        <button class="accordion-button d-flex align-items-left" type="button" data-bs-toggle="collapse" data-bs-target="#panel1Body" aria-expanded="true" aria-controls="panel1Body">
+                        MQ Debug
+                        </button>
+                    </h2>
+                    <!-- Collapsible Panel Body -->
+                    <div id="panel1Body" class="accordion-collapse collapse show" aria-labelledby="panel1Heading" data-bs-parent="#panelAccordion">
+                        <div class="accordion-body" style="max-height: 600px; overflow-y: auto;">
+                            <textarea id="debug-panel" class="form-control" rows="20" readonly style="white-space: pre-wrap; overflow-y: auto;"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast container for API error notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer" style="z-index: 1090;">
+    <div id="apiToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000">
+        <div class="d-flex">
+            <div class="toast-body" id="apiToastBody">
+                <!-- Dynamic message -->
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Polarization Chart Modal -->
+<div class="modal fade" id="polChartModal" tabindex="-1" aria-labelledby="polChartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="polChartModalLabel">Polarization Tracking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <canvas id="pol-chart"></canvas>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Info Modal -->
+<div class="modal fade" id="AgentDetailsModal" tabindex="-1" aria-labelledby="AgentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AgentInfoModalLabel">Agent Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" id="agentInfoTabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="details-tab" data-bs-toggle="tab" href="#AgentDetailsContent">Details</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="calibration-tab" data-bs-toggle="tab" href="#AgentCalibrationContent">Calibration Status</a>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- Details Tab -->
+                    <div class="tab-pane fade show active" id="AgentDetailsContent" role="tabpanel" aria-labelledby="details-tab">
+                        <!-- Dynamic Content Goes Here -->
+                    </div>
+
+                    <!-- Calibration Status Tab -->
+                    <div class="tab-pane fade" id="AgentCalibrationContent">
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Current Task Operation:</strong></label>
+                            <div id="currentTaskOperation" class="alert alert-info">Waiting for task updates...</div>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Task Progress:</strong></label>
+                            <div class="progress">
+                                <div id="taskProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" 
+                                    role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                        <div id="calibrationSpinner">
+                            <div id="calibration-loading-spinner" class="text-center my-3">
+                              <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                              </div>
+                            </div>
+                        </div>
+                        <div class="accordion" id="calibrationAccordion"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Experiment Details Modal with BSM and Histogram Tabs -->
+<div class="modal fade" id="ExperimentDetailsModal" tabindex="-1" aria-labelledby="ExperimentDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="ExperimentDetailsModalLabel">Experiment Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+  
+        <div class="modal-body">
+          <!-- Nav Tabs -->
+          <ul class="nav nav-tabs" id="experimentTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">Details</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="hom-tab" data-bs-toggle="tab" data-bs-target="#homTab" type="button" role="tab" aria-controls="homTab" aria-selected="false">HOM Visibility</button>
+              </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="bsm-tab" data-bs-toggle="tab" data-bs-target="#bsmDataTab" type="button" role="tab" aria-controls="bsmDataTab" aria-selected="false">BSM Tracking</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="timetaggerucb-tab" data-bs-toggle="tab" data-bs-target="#timetaggerucb" type="button" role="tab" aria-controls="timetaggerucb" aria-selected="false">Time Tagger UCB</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="timetaggerlbl-tab" data-bs-toggle="tab" data-bs-target="#timetaggerlbl" type="button" role="tab" aria-controls="timetaggerlbl" aria-selected="false">Time Tagger LBNL</button>
+            </li>
+          </ul>
+  
+          <!-- Tab Contents -->
+          <div class="tab-content mt-3" id="experimentTabsContent">
+            <!-- Details Tab -->
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+              <div id="ExperimentDetailsContent"></div>
+            </div>
+  
+            <!-- HOM Tab -->
+            <div class="tab-pane fade" id="homTab" role="tabpanel" aria-labelledby="hom-tab">
+                <div style="height: 400px;">
+                    <canvas id="hom-chart" style="width: 100%; height: 400px;"></canvas>
+                  </div>
+              </div>
+
+            <!-- BSM Data Tab -->
+            <div class="tab-pane fade" id="bsmDataTab" role="tabpanel" aria-labelledby="bsm-tab">
+                <div class="d-flex justify-content-end mb-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" id="clearBsmChartBtn">
+                        Clear Data
+                    </button>
+                </div>
+              <div style="height: 400px;">
+                <canvas id="bsm-chart" style="width: 100%; height: 400px;"></canvas>
+                <div id="bsm-visibility-value" class="mt-3 fw-bold text-center"></div>
+              </div>
+            </div>
+  
+            <!-- Time Tagger UCB Tab -->
+            <div class="tab-pane fade" id="timetaggerucb" role="tabpanel" aria-labelledby="timetaggerucb-tab">
+                <div class="my-3" style="width: 100%; height: 300px;">
+                <h5 class="text-center">Wavepacket</h5>
+                <canvas id="wavepacketChartUCB"></canvas>
+                <div class="my-2"></div>
+                </div>
+                <div class="my-4" style="width: 100%; height: 300px;">
+                <h5 class="text-center">Photon Collection Rate</h5>
+                <canvas id="collectionRateChartUCB"></canvas>
+                <div id="photon-count-label-ucb" class="mt-3 fw-bold text-center"></div>
+                </div>
+            </div>
+
+            <!-- Time Tagger LBL Tab -->
+            <div class="tab-pane fade" id="timetaggerlbl" role="tabpanel" aria-labelledby="timetaggerlbl-tab">
+                <div class="my-3" style="width: 100%; height: 300px;">
+                <h5 class="text-center">Wavepacket</h5>
+                <canvas id="wavepacketChartLBL"></canvas>
+                <div class="my-2"></div>
+                </div>
+                <div class="my-4" style="width: 100%; height: 300px;">
+                <h5 class="text-center">Photon Collection Rate</h5>
+                <canvas id="collectionRateChartLBL"></canvas>
+                <div id="photon-count-label-lbnl" class="mt-3 fw-bold text-center"></div>
+                </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
+<!-- Calibration Details Modal -->
+<div class="modal fade" id="CalibrationDetailsModal" tabindex="-1" aria-labelledby="CalibrationDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="CalibrationDetailsModalLabel">Calibration Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="CalibrationDetailsContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Ping Modal -->
+<div class="modal fade" id="AgentPingModal" tabindex="-1" aria-labelledby="AgentPingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="AgentPingModalLabel">Agent Ping</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="agentPingForm">
+                    <!-- Multi-Select for Node Names -->
+                    <div class="mb-3">
+                        <label for="nodeSelect" class="form-label">Select Agents</label>
+                        <select class="form-select" id="nodeSelect" multiple>
+                            <!-- Node Options Will Be Populated Here -->
+                        </select>
+                    </div>
+                    <!-- Input for Number of Iterations -->
+                    <div class="mb-3">
+                        <label for="iterations" class="form-label">Number of Iterations</label>
+                        <input type="number" class="form-control" id="iterations" min="1" value="1" style="width: 100px;">
+                    </div>
+                    <!-- Horizontal Divider -->
+                    <hr>
+                    <!-- Bordered Text Area for Results -->
+                    <div class="mb-3">
+                        <label for="pingResults" class="form-label">Ping Results</label>
+                        <textarea class="form-control border border-secondary" id="pingResults" rows="10" readonly></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="app.pingModal.submit()">Submit</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Calibration Modal -->
+<div class="modal fade" id="CalibrationModal" tabindex="-1" aria-labelledby="CalibrationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="CalibrationModalLabel">Calibration Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="calibrationForm">
+                    <!-- Calibration Type Dropdown -->
+                    <div class="mb-3">
+                        <label for="calibrationType" class="form-label">Calibration Type</label>
+                        <select class="form-select" id="calibrationType">
+                            <!-- Options Will Be Populated Dynamically -->
+                        </select>
+                    </div>
+                    <!-- Source Dropdown -->
+                    <div class="mb-3">
+                        <label for="source" class="form-label">Source</label>
+                        <select class="form-select" id="source">
+                            <!-- Source Options Populated Dynamically -->
+                        </select>
+                    </div>
+                    <!-- Destination Dropdown -->
+                    <div class="mb-3">
+                        <label for="destination" class="form-label">Destination</label>
+                        <select class="form-select" id="destination">
+                            <!-- Destination Options Populated Dynamically -->
+                        </select>
+                    </div>
+                    <!-- Parameters Input -->
+                    <div class="mb-3">
+                        <label for="power" class="form-label">Error Threshold</label>
+                        <input type="number" class="form-control" id="power" value="0.1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="light" class="form-label">Mean Photon Number</label>
+                        <input type="text" class="form-control" id="light" value="5">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="app.calibFormModal.submit()">Submit</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Single Photon Generation Modal -->
+<div class="modal fade" id="spgModal" tabindex="-1" aria-labelledby="spgModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="spgForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="spgModalLabel">Single Photon Generation</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="spgSourceContainer">
+              <label class="form-label">Source Agent</label>
+              <div class="input-group mb-2 spg-source-group">
+                <select class="form-select spg-source" name="src[]">
+                  <!-- Options populated dynamically -->
+                </select>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-3" onclick="app.spgModal.addSourceDropdown()">+ Add Source</button>
+  
+            <div class="mb-3">
+              <label id="spg-rate-label" class="form-label">Rate (Hz)</label>
+              <input type="number" class="form-control" name="rate" required value="1000">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Duration (s)</label>
+              <input type="number" class="form-control" name="duration" required value="6000">
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="app.spgModal.handleSubmit()">Submit</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+
+<!-- EGP Modal -->
+<div class="modal fade" id="EGPModal" tabindex="-1" aria-labelledby="EGPModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="EGP">Entanglement Generation Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="egpForm">
+                    <!-- Source Dropdown -->
+                    <div class="mb-3">
+                        <label for="egpSource" class="form-label">Source</label>
+                        <select class="form-select" id="egpSource">
+                            <!-- Source Options Populated Dynamically -->
+                        </select>
+                    </div>
+                    <!-- Destination Dropdown -->
+                    <div class="mb-3">
+                        <label for="egpDestination" class="form-label">Destination</label>
+                        <select class="form-select" id="egpDestination">
+                            <!-- Destination Options Populated Dynamically -->
+                        </select>
+                    </div>
+                    <!-- Parameters Input -->
+                    <div class="mb-3">
+                        <label for="pairs" class="form-label">Pairs</label>
+                        <input type="number" class="form-control" id="pairs">
+                    </div>
+                    <div class="mb-3">
+                        <label for="bellState" class="form-label">Bell State</label>
+                        <select class="form-select" id="bellState">
+                            <!-- Bell State Options Populated Dynamically -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fidelity" class="form-label">Fidelity</label>
+                        <input type="number" class="form-control" id="fidelity">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="app.egpModal.submit()">Submit</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const app = new App({{ data | tojson }});
+</script>
+
+{% endblock %}

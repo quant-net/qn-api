@@ -1,0 +1,12 @@
+# eclipse project files
+.project
+.pydevproject
+
+*.pyc
+
+# Node.js
+node_modules/
+package-lock.json
+
+# esbuild output
+static/js/dist/

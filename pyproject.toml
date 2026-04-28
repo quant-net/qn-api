@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantnet-api"
+authors = [
+  { name="ESnet", email="quantum@es.net" },
+]
+description = "Web dashboard and REST API for the Quant-Net quantum networking platform"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "BSD-3-Clause-LBNL"
+license-files = ["LICEN[CS]E*"]
+dynamic = [
+    "version",
+    "dependencies"
+]
+
+[project.scripts]
+qn-api = "main:cli"
+
+[project.urls]
+Homepage = "https://github.com/quant-net/qn-api"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+version = {attr = "api.__version__"}
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["api", "api.*", "common", "common.*", "static", "static.*", "templates", "templates.*"]
+
+[tool.setuptools.package-data]
+static = ["**/*"]
+templates = ["**/*"]
