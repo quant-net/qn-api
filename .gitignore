@@ -3,6 +3,7 @@
 .pydevproject
 
 *.pyc
+__pycache__/
 
 # Node.js
 node_modules/
@@ -10,3 +11,22 @@ package-lock.json
 
 # esbuild output
 static/js/dist/
+
+# Python build/packaging
+build/
+dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+venv/
+.venv/
+env/
+.env
+
+# OS files
+.DS_Store

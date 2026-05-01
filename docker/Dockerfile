@@ -8,19 +8,22 @@ RUN apt-get update && \
 
 RUN pip install --upgrade pip setuptools wheel
 
-RUN git clone --single-branch --branch develop https://github.com/quant-net/qn-mq && \
-    cd qn-mq && pip install -e .
-RUN git clone --single-branch --branch develop https://github.com/quant-net/qn-server && \
-    cd qn-server && pip install -e .
-RUN git clone --single-branch --branch develop https://github.com/quant-net/qn-plugins
+ARG BRANCH
 
-RUN git clone --single-branch --branch develop https://github.com/quant-net/qn-api && \
+RUN echo "Dockerfile BRANCH value is: ${BRANCH}"
+
+RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn-mq && \
+    cd qn-mq && pip install --no-cache-dir .
+RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn-server && \
+    cd qn-server && pip install --no-cache-dir .
+RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn-plugins
+
+RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn-api && \
     cd qn-api && \
-    pip install -e . && \
+    pip install --no-cache-dir . && \
     npm install && \
     npm run build
 
 WORKDIR /qn-api
 
 CMD ["qn-api"]
-
