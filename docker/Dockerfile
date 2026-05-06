@@ -20,7 +20,7 @@ RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn
 
 RUN git clone --single-branch --branch ${BRANCH} https://github.com/quant-net/qn-api && \
     cd qn-api && \
-    pip install --no-cache-dir . && \
+    pip install --no-cache-dir -e . && \
     npm install && \
     npm run build
 
